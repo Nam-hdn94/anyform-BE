@@ -1,0 +1,6 @@
+export enum UserApis {
+ADD_USER = 'ADD_USER',
+VIEW_USER = 'VIEW_USER',
+EDIT_USER = 'EDIT_USER',
+DELETE_USER = 'DELETE_USER',
+}
