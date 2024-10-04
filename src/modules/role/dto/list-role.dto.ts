@@ -2,7 +2,6 @@ import { ApiPropertyOptional } from '@nestjs/swagger'
 import { Transform, TransformFnParams } from 'class-transformer'
 import { IsBooleanString, IsEnum, IsOptional } from 'class-validator'
 import { i18nValidationMessage } from 'nestjs-i18n'
-import { RequiredPagination } from 'src/utils/dto/pagination.dto'
 import { OrderBy } from 'src/utils/interface/order-by'
 
 export enum SortByRole {
@@ -12,7 +11,7 @@ export enum SortByRole {
   UPDATED_AT = 'updated_at',
 }
 
-export class ListRoleDto extends RequiredPagination {
+export class ListRoleDto  {
   @IsOptional()
   @IsEnum(SortByRole, {
     message: i18nValidationMessage('validation.match_enum', {

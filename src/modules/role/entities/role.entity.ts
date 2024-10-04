@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm'
-import Permission from '../../permission/entities/permission.entity'
+
 import User from '../../user/entities/user.entity'
 
 @Entity()
@@ -27,8 +27,8 @@ class Role {
   @Column({ default: true })
   deleteable: boolean
 
-  @OneToMany(() => Permission, (permission) => permission.role)
-  permissions: Permission[]
+  // @OneToMany(() => Permission, (permission) => permission.role)
+  // permissions: Permission[]
 
   @ManyToMany(() => User, (user) => user.roles, { onDelete: 'CASCADE' })
   users: User[]

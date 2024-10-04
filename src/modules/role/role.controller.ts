@@ -10,15 +10,15 @@ import {
 } from '@nestjs/common'
 import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import { I18n, I18nContext } from 'nestjs-i18n'
-import { Auth } from 'src/decorators/roles.decorator'
-import { List } from 'src/utils/interface/list-response'
 import { DeleteResult } from 'typeorm'
-import { RoleApis } from '../api/api.constant'
 import { CreateRoleDto } from './dto/create-role.dto'
 import { ListRoleDto } from './dto/list-role.dto'
 import { UpdateRoleDto } from './dto/update-role.dto'
 import Role from './entities/role.entity'
 import { RoleService } from './role.service'
+import { Auth } from 'src/decorators/roles.decorator'
+import { RoleApis } from '../api/api.constant'
+import { List } from 'src/utils/interface/list-response'
 
 @ApiTags('role')
 @Controller('role')

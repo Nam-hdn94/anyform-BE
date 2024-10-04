@@ -1,9 +1,9 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
-import { I18nContext } from "nestjs-i18n";
-import { LoginResponse } from "./dto/auth.dto";
+import { I18n, I18nContext } from "nestjs-i18n";
+import { LoginDto, LoginResponse } from "./dto/auth.dto";
 import { RegisterDto } from "../user/dto/register.dto";
 import User from "../user/entities/user.entity";
-import { NotAcceptable } from "src/utils/function/exception";
+import { NotAcceptable, NotFound } from "src/utils/function/exception";
 import { UserService } from "../user/user.service";
 import { ConfigService } from "@nestjs/config";
 import { DeviceService } from "src/device/device.service";
@@ -11,6 +11,9 @@ import { JwtService } from "@nestjs/jwt";
 import Device from "src/device/entities/device.entity";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from 'cache-manager';
+import { PSQL } from "src/database";
+import { CheckEmailDto } from "./dto/check-mail.dto";
+import { RefreshTokenDto } from "./dto/refresh-token.dto";
 
 
 
@@ -108,5 +111,75 @@ export class AuthService {
         await this.registerNotification(fcm_token, user)
     
         return this.generateToken(user)
+      }
+
+      async login(
+        { email, otp, fcm_token }: LoginDto,
+        i18n: I18nContext,
+      ): Promise<LoginResponse> {
+        const user: User = await PSQL.createQueryBuilder(User, 'user')
+          .where('user.email = :email', { email })
+          .select(['user.id', 'user.email', 'user.password','user.is_deleted'])
+          .getOne()
+    
+        if (!user) {
+          return NotFound('user', i18n)
+        }
+        if (user?.is_deleted === true) {
+          return NotAcceptable('user.deleted', i18n)
+        }
+        let verified = false
+    
+        const appName: string = this.config.get<string>('APP_NAME')
+    
+        const key = `${appName}-${email}`
+        const code: string = await this.cacheManager.get<string>(key)
+    
+        if (!code) return NotAcceptable('auth.otp.timeout', i18n)
+    
+        verified = code === otp
+    
+        if (!verified) {
+          return NotAcceptable('auth.otp.invalid', i18n)
+        }
+    
+        await this.cacheManager.del(`${appName}-${email}`) // remove OTP code
+        await this.cacheManager.del(`${appName}-${email}-count`) // remove count resend OTP
+    
+        await this.registerNotification(fcm_token, user)
+    
+        return this.generateToken(user)
+      }
+
+      async CheckEmail(
+        { email }: CheckEmailDto,
+        i18n : I18nContext,
+      ): Promise<boolean>{
+        const user: User = await PSQL.createQueryBuilder(User, 'user')
+         .where('user.email = :email', { email })
+         .select(['user.id', 'user.email', 'user.password'])
+         .getOne()
+         if(!user) {
+          return false
+         } else return true
+      }
+
+      async refresh(
+        { refresh_token }: RefreshTokenDto,
+        i18n : I18nContext,
+      ): Promise<LoginResponse>{
+        const jwtSecret = this.config.get<string>('JWT_KEy_REFRESH');
+        try{
+          const verified = await this.jwtService.verify(refresh_token, {secret: jwtSecret})
+           const user = await this.userService.findByRefreshToken(verified.id, refresh_token, i18n);
+          return this.generateToken(user, false);
+        } catch(error) {
+          console.error('Error in token refresh: ', error);
+          if(error.name === 'TokenExpireError'){
+            return NotAcceptable('auth.token.expired', i18n);
+          }
+          return NotAcceptable('auth.token.invalid', i18n);
+        }
+        
       }
 }

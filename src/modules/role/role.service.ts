@@ -8,42 +8,43 @@ import {
   NotAcceptable,
   NotFound,
 } from 'src/utils/function/exception'
-import { List } from 'src/utils/interface/list-response'
-import { OrderBy } from 'src/utils/interface/order-by'
+
 import { DeleteResult, FindOperator, In, Raw } from 'typeorm'
-import { PSQL } from '../database'
-import Permission from '../permission/entities/permission.entity'
 import User from '../user/entities/user.entity'
 import { CreateRoleDto } from './dto/create-role.dto'
 import { ListRoleDto, SortByRole } from './dto/list-role.dto'
 import { UpdateRoleDto } from './dto/update-role.dto'
 import Role from './entities/role.entity'
 import { Roles } from './role.constant'
+import { PSQL } from 'src/database'
+import { List } from 'src/utils/interface/list-response'
+import { OrderBy } from 'src/utils/interface/order-by'
+// import { BadRequest } from 'src/utils/function/exception'
 
 @Injectable()
 export class RoleService {
   private logger = new Logger(RoleService.name)
 
-  async can(roles: Role[], api: string): Promise<boolean> {
-    const valid: boolean[] = (
-      await Promise.all(
-        roles.map(async (r: Role) => {
-          if (r.name === Roles.ADMIN) return true
+  // async can(roles: Role[], api: string): Promise<boolean> {
+  //   const valid: boolean[] = (
+  //     await Promise.all(
+  //       roles.map(async (r: Role) => {
+  //         if (r.name === Roles.ADMIN) return true
 
-          if (!r.is_active) return false
+  //         if (!r.is_active) return false
 
-          const role: Role = await PSQL.getRepository(Role).findOne({
-            where: { id: r.id },
-            relations: ['permissions'],
-          })
+  //         const role: Role = await PSQL.getRepository(Role).findOne({
+  //           where: { id: r.id },
+  //           relations: ['permissions'],
+  //         })
 
-          return role.permissions.map((p: Permission) => p.apis.includes(api))
-        }),
-      )
-    ).flat()
+  //         return role.permissions.map((p: Permission) => p.apis.includes(api))
+  //       }),
+  //     )
+  //   ).flat()
 
-    return valid.some((v: boolean) => v)
-  }
+  //   return valid.some((v: boolean) => v)
+  // }
 
   async create(
     {
@@ -75,14 +76,7 @@ export class RoleService {
     nRole.description = description
     nRole.is_active = is_active
 
-    const permissions: Permission[] = await PSQL.getRepository(Permission).find(
-      {
-        where: { id: In(permission_ids) },
-      },
-    )
-
-    nRole.permissions = permissions.filter((p: Permission) => !!p)
-
+   
     const users: User[] = await PSQL.getRepository(User).find({
       where: { id: In(user_ids) },
     })
@@ -94,21 +88,19 @@ export class RoleService {
 
   async find(query: ListRoleDto): Promise<List<Role>> {
     const {
-      page,
-      page_size,
       sort_by = SortByRole.ID,
       order_by = OrderBy.ASC,
       name,
       is_active,
     } = query
 
-    let nPage: number = +page
+    let nPage: number = +1
 
     if (nPage < 1) {
       nPage = 1
     }
 
-    const limit: number = +page_size
+    const limit: number = +10
     const skip: number = (nPage - 1) * limit
 
     const filters: {
@@ -196,13 +188,8 @@ export class RoleService {
     }
 
     if (role.name !== Roles.ADMIN) {
-      const permissions: Permission[] = await PSQL.getRepository(
-        Permission,
-      ).find({
-        where: { id: In(permission_ids) },
-      })
+    
 
-      role.permissions = permissions.filter((p: Permission) => !!p)
     }
 
     const users: User[] = await PSQL.getRepository(User).find({

@@ -6,12 +6,13 @@ import {
   NotAcceptableException,
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
+import { PSQL } from 'src/database'
 import { ROLES_KEY } from 'src/decorators/roles.decorator'
-import { PSQL } from 'src/modules/database'
+
 import { Roles } from 'src/modules/role/role.constant'
 import { RoleService } from 'src/modules/role/role.service'
 import User from 'src/modules/user/entities/user.entity'
-import WorkspaceDeactivateUser from 'src/modules/workspace/entities/workspaceDeactivateUser.entity'
+
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -34,31 +35,28 @@ export class RolesGuard implements CanActivate {
     }
 
     if (user?.id && workspaceId) {
-      const check: WorkspaceDeactivateUser = await PSQL.createQueryBuilder(
-        WorkspaceDeactivateUser,
-        'deactive',
-      )
-        .where('deactive.user_id = :user_id', { user_id: user.id })
-        .andWhere('deactive.workspace_id = :workspace_id', {
-          workspace_id: workspaceId,
-        })
-        .getOne()
+      // const check: WorkspaceDeactivateUser = await PSQL.createQueryBuilder(
+      //   WorkspaceDeactivateUser,
+      //   'deactive',
+      // )
+      //   .where('deactive.user_id = :user_id', { user_id: user.id })
+      //   .andWhere('deactive.workspace_id = :workspace_id', {
+      //     workspace_id: workspaceId,
+      //   })
+      //   .getOne()
 
-      if (check?.id) {
-        throw new NotAcceptableException(
-          'You have been deactivated to this workspace',
-        )
-      }
+      // if (check?.id) {
+      //   throw new NotAcceptableException(
+      //     'You have been deactivated to this workspace',
+      //   )
+      // }
     }
 
     if (requiredRoles.length === 0) {
       return true
     }
 
-    const isValid: boolean = await this.roleService.can(
-      user.roles,
-      requiredRoles[0],
-    )
+    const isValid: boolean = true
 
     if (!isValid) {
       throw new ForbiddenException()

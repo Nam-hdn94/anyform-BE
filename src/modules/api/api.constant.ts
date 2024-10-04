@@ -4,3 +4,9 @@ VIEW_USER = 'VIEW_USER',
 EDIT_USER = 'EDIT_USER',
 DELETE_USER = 'DELETE_USER',
 }
+export enum RoleApis {
+    ADD_ROLE = 'ADD_ROLE',
+    VIEW_ROLE = 'VIEW_ROLE',
+    EDIT_ROLE = 'EDIT_ROLE',
+    DELETE_ROLE = 'DELETE_ROLE',
+  }

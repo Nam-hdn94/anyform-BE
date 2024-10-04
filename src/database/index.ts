@@ -53,6 +53,6 @@ const initRoles = async (): Promise<Role[]> => {
   return roles
 }
 
-PSQL.initialize().then(() => initRoles())
+// PSQL.initialize().then(() => initRoles())
 
 export { PSQL }
