@@ -5,6 +5,7 @@ import { MailOtp } from "./mail.constant"
 import { Cache } from 'cache-manager'
 import { CACHE_MANAGER } from "@nestjs/cache-manager"
 
+
 const MAX_SEND = 6
 const DEFAULT_SUBJECT = 'Welcome AnyForm Sevice!'
 
@@ -19,44 +20,6 @@ export class MailService {
     private config: ConfigService,
   ){}
 
-//   async otp({ code, email }: MailOtp): Promise<boolean> {
-//     const key = `${this.config.get<string>('APP_NAME')}-${email}-count`
-
-//     const countSent: number = +(await this.cacheManager.get<string>(key)) || 0
-
-//     if (countSent && countSent >= MAX_SEND - 1) {
-//       // return NotAcceptable('mail.max_resend_otp', i18n, {
-//       //   max: MAX_SEND - 1,
-//       // });
-//       return false
-//     }
-
-//     try {
-//       const result = await this.mailerService.sendMail({
-//         to: email,
-//         subject: DEFAULT_SUBJECT,
-//         template: 'otp',
-//         context: {
-//           email,
-//           code,
-//         },
-//       })
-
-//       const isSucceed = !!result?.messageId
-
-//       if (isSucceed) {
-//         await this.cacheManager.set(key, countSent + 1, {
-//           ttl: 600, // 10 mins
-//         })
-//       }
-
-//       return isSucceed
-//     } catch (error) {
-//       this.logger.error(`🚫 ~ send mail OTP to ${email} error`, error)
-
-//       throw new NotAcceptableException(error?.message)
-//     }
-//   }
   async otp({code, email}:MailOtp): Promise<boolean>{
     const key = `${this.config.get<string>('AnyForm')}-${email}-count`;
     const countSent: number = +(await this.cacheManager.get<string>(key)) || 0;

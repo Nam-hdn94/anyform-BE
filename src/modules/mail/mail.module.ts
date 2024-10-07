@@ -44,13 +44,13 @@ const REDIS_PORT = 'REDIS_PORT';
       }),
     }),
     CacheModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        store: redisStore,
-        host: config.get<string>(REDIS_HOST) || 'localhost',
-        port: config.get<number>(REDIS_PORT) || 6379,
+        useFactory: (config: ConfigService) => ({
+          store: redisStore as unknown as string, // Force cast to string if needed
+          host: config.get<string>('REDIS_HOST'),
+          port: config.get<number>('REDIS_PORT'),
+        }),
+        inject: [ConfigService],
       }),
-    }),
   ],
   providers: [MailService],
   exports: [MailService],
