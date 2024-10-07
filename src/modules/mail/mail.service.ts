@@ -19,42 +19,66 @@ export class MailService {
     private config: ConfigService,
   ){}
 
-  async otp({ code, email }: MailOtp): Promise<boolean> {
-    const key = `${this.config.get<string>('APP_NAME')}-${email}-count`
+//   async otp({ code, email }: MailOtp): Promise<boolean> {
+//     const key = `${this.config.get<string>('APP_NAME')}-${email}-count`
 
-    const countSent: number = +(await this.cacheManager.get<string>(key)) || 0
+//     const countSent: number = +(await this.cacheManager.get<string>(key)) || 0
 
-    if (countSent && countSent >= MAX_SEND - 1) {
-      // return NotAcceptable('mail.max_resend_otp', i18n, {
-      //   max: MAX_SEND - 1,
-      // });
-      return false
+//     if (countSent && countSent >= MAX_SEND - 1) {
+//       // return NotAcceptable('mail.max_resend_otp', i18n, {
+//       //   max: MAX_SEND - 1,
+//       // });
+//       return false
+//     }
+
+//     try {
+//       const result = await this.mailerService.sendMail({
+//         to: email,
+//         subject: DEFAULT_SUBJECT,
+//         template: 'otp',
+//         context: {
+//           email,
+//           code,
+//         },
+//       })
+
+//       const isSucceed = !!result?.messageId
+
+//       if (isSucceed) {
+//         await this.cacheManager.set(key, countSent + 1, {
+//           ttl: 600, // 10 mins
+//         })
+//       }
+
+//       return isSucceed
+//     } catch (error) {
+//       this.logger.error(`🚫 ~ send mail OTP to ${email} error`, error)
+
+//       throw new NotAcceptableException(error?.message)
+//     }
+//   }
+  async otp({code, email}:MailOtp): Promise<boolean>{
+    const key = `${this.config.get<string>('AnyForm')}-${email}-count`;
+    const countSent: number = +(await this.cacheManager.get<string>(key)) || 0;
+    if (countSent && countSent >= MAX_SEND - 1){
+        return false;
     }
-
-    try {
-      const result = await this.mailerService.sendMail({
-        to: email,
-        subject: DEFAULT_SUBJECT,
-        template: 'otp',
-        context: {
-          email,
-          code,
-        },
-      })
-
-      const isSucceed = !!result?.messageId
-
-      if (isSucceed) {
-        await this.cacheManager.set(key, countSent + 1, {
-          ttl: 600, // 10 mins
+    try{
+        const result = await this.mailerService.sendMail({
+            to: email,
+            subject: DEFAULT_SUBJECT,
+            template: 'otp',
+            context: { email, code},
         })
-      }
-
-      return isSucceed
+        const isSucceed =!!result?.messageId;
+        if (isSucceed) {
+            await this.cacheManager.set(key, countSent + 1, { ttl: 600 }); // 10 mins
+        }
+        return isSucceed;
     } catch (error) {
-      this.logger.error(`🚫 ~ send mail OTP to ${email} error`, error)
-
-      throw new NotAcceptableException(error?.message)
+        this.logger.error(`🚫 Failed to send OTP to ${email}. Error: ${error?.message}`, error);
+        throw new NotAcceptableException('Unable to send OTP');
     }
   }
+
 }  

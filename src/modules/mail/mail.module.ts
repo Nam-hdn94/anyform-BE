@@ -1,13 +1,19 @@
-import { MailerModule } from '@nestjs-modules/mailer'
-import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter'
-import { ConfigService } from '@nestjs/config'
-import * as redisStore from 'cache-manager-redis-store'
-import { join } from 'path'
-import { MailService } from './mail.service'
-import { Module } from '@nestjs/common'
-import { CacheModule } from '@nestjs/cache-manager'
+import { MailerModule } from '@nestjs-modules/mailer';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { CacheModule } from '@nestjs/cache-manager';
+import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { join } from 'path';
+import { MailService } from './mail.service';
+import * as redisStore from 'cache-manager-redis-store';
 
-
+// Constants for config keys
+const MAIL_HOST = 'MAIL_HOST';
+const MAIL_USER = 'MAIL_USER';
+const MAIL_PASSWORD = 'MAIL_PASSWORD';
+const MAIL_FROM = 'MAIL_FROM';
+const REDIS_HOST = 'REDIS_HOST';
+const REDIS_PORT = 'REDIS_PORT';
 
 @Module({
   imports: [
@@ -15,18 +21,18 @@ import { CacheModule } from '@nestjs/cache-manager'
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         transport: {
-          host: config.get<string>('MAIL_HOST'),
+          host: config.get<string>(MAIL_HOST) || 'localhost',  
           secure: false,
           auth: {
-            user: config.get<string>('MAIL_USER'),
-            pass: config.get<string>('MAIL_PASSWORD'),
+            user: config.get<string>(MAIL_USER) || '',
+            pass: config.get<string>(MAIL_PASSWORD) || '',
           },
           tls: {
             rejectUnauthorized: false,
           },
         },
         defaults: {
-          from: `"TMessage" <${config.get<string>('MAIL_FROM')}>`,
+          from: `"AnyForm" <${config.get<string>(MAIL_FROM) || 'no-reply@anyform.com'}>`,
         },
         template: {
           dir: join(__dirname, 'templates'),
@@ -41,8 +47,8 @@ import { CacheModule } from '@nestjs/cache-manager'
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         store: redisStore,
-        host: config.get<string>('REDIS_HOST'),
-        port: config.get<string>('REDIS_PORT'),
+        host: config.get<string>(REDIS_HOST) || 'localhost',
+        port: config.get<number>(REDIS_PORT) || 6379,
       }),
     }),
   ],
@@ -50,3 +56,4 @@ import { CacheModule } from '@nestjs/cache-manager'
   exports: [MailService],
 })
 export class MailModule {}
+
