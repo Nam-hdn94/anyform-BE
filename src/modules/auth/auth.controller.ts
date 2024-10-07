@@ -2,7 +2,7 @@ import { Controller } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Body, Post, Query } from '@nestjs/common'
-import { LoginDto, LoginResponse } from "./dto/auth.dto";
+import { LoginDto, LoginResponse, LogoutDto } from "./dto/auth.dto";
 import { I18n, I18nContext } from "nestjs-i18n";
 import { RegisterDto } from "../user/dto/register.dto";
 import { CheckEmailDto } from "./dto/check-mail.dto";
@@ -73,5 +73,15 @@ export class AuthController {
   ): Promise<LoginResponse> {
     return this.authService.refresh(payload, i18n)
   }
-    
-    }
+
+  @Auth()
+  @ApiOperation({ summary: 'Logout to service' })
+  @Post('logout')
+  logout(
+    @Body() payload: LogoutDto,
+    @GetAuthUser() user: User,
+  ): Promise<UpdateResult> {
+    return this.authService.logout(payload, user)
+  }
+
+}

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { I18n, I18nContext } from "nestjs-i18n";
-import { LoginDto, LoginResponse } from "./dto/auth.dto";
+import { LoginDto, LoginResponse, LogoutDto } from "./dto/auth.dto";
 import { RegisterDto } from "../user/dto/register.dto";
 import User from "../user/entities/user.entity";
 import { NotAcceptable, NotFound } from "src/utils/function/exception";
@@ -20,6 +20,7 @@ import { generateOTP } from "src/utils/function/common";
 import { Environments } from "src/utils/interface/environments";
 import { MailService } from "../mail/mail.service";
 import { ConfirmEmailDto } from "./dto/confirm-email.dto";
+import { UpdateResult } from "typeorm";
 
 
 
@@ -237,5 +238,11 @@ export class AuthService {
         return this.mailService.otp({ code, email });
     }
       
+    async logout({ fcm_token }: LogoutDto, user: User): Promise<UpdateResult> {
+      if (fcm_token) {
+        this.deviceService.remove(fcm_token, user)
+      }
+      return this.userService.updateRefreshToken(user.id, '')
+    }
 
 }
