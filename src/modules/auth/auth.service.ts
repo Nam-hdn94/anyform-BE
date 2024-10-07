@@ -14,17 +14,27 @@ import { Cache } from 'cache-manager';
 import { PSQL } from "src/database";
 import { CheckEmailDto } from "./dto/check-mail.dto";
 import { RefreshTokenDto } from "./dto/refresh-token.dto";
+import { OtpDto } from "./dto/otp.dto";
+import { OtpType } from "./auth.constants";
+import { generateOTP } from "src/utils/function/common";
+import { Environments } from "src/utils/interface/environments";
+import { MailService } from "../mail/mail.service";
+import { ConfirmEmailDto } from "./dto/confirm-email.dto";
 
 
 
 @Injectable()
 export class AuthService {
+  confirmEmail(payload: ConfirmEmailDto, user: User, i18n: I18nContext<Record<string, unknown>>): Promise<import("typeorm").UpdateResult> {
+    throw new Error("Method not implemented.");
+  }
     private logger = new Logger(AuthService.name)
 
     constructor(
         private userService: UserService,
         private jwtService: JwtService,
-         private deviceService: DeviceService,
+        private deviceService: DeviceService,
+        private mailService: MailService,
         @Inject(CACHE_MANAGER) private cacheManager: Cache,
         private config: ConfigService,
       ) {}
@@ -182,4 +192,50 @@ export class AuthService {
         }
         
       }
+
+      async otp(
+        { email, type }: OtpDto,
+        i18n: I18nContext,
+    ): Promise<boolean> {
+        const user = await PSQL.createQueryBuilder(User, 'user')
+            .where('user.email = :email', { email })
+            .select(['user.id', 'user.id_deleted'])
+            .getOne();
+
+        if (user?.is_deleted === true) {
+            return NotAcceptable('user.deleted', i18n);
+        }
+
+        switch (type) {
+            case OtpType.SIGN_UP:
+                if (user) {
+                    return NotAcceptable('user.email.existed', i18n);
+                }
+                break;
+            case OtpType.SIGN_IN:
+                if (!user) {
+                    return NotFound('user.email', i18n);
+                }
+                break;
+            default:
+                break;
+        }
+
+        const key = `${this.config.get<string>('APP_NAME')}-${email}`;
+        let code: string = await this.cacheManager.get<string>(key);
+
+        if (!code) {
+            code = generateOTP();
+            const env = this.config.get<string>('NODE_ENV');
+
+            if (env !== Environments.PRODUCTION) {
+                console.log(`📧 ~ OTP code for email ${email}:`, code);
+            }
+
+            await this.cacheManager.set(key, code, 600);
+        }
+        return this.mailService.otp({ code, email });
+    }
+      
+
 }
